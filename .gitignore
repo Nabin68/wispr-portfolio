@@ -1,0 +1,7 @@
+# Full-size originals (30 MB video, 1.5 MB portrait). The site serves the
+# compressed copies in assets/.
+originals/
+.DS_Store
+
+# Reference image only (third-party cursor art); the site draws its own cursor.
+assets/custom_cursor.jpg

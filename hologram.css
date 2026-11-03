@@ -1,0 +1,161 @@
+/* ───────── Hologram guide: a ball rides a line down the left gutter ───────── */
+
+/* Reserve a left gutter for the guide on desktop; on very wide screens the content stays centred. */
+@media (min-width: 1180px) {
+  html.holo-on .container { width: min(1180px, 100% - 290px); margin-left: max(250px, (100% - 1180px) / 2); margin-right: auto; }
+  html.holo-on .tl-stage { width: min(1360px, 100% - 290px); margin-left: max(250px, (100% - 1360px) / 2); margin-right: auto; }
+}
+
+.holo {
+  --c: 79, 123, 255;           /* line / beam / glow colour (rgb) */
+  --c2: 123, 92, 255;
+  position: fixed; left: 0; top: 0; z-index: 40; width: var(--g, 250px); height: 100vh; pointer-events: none;
+  transition: opacity 0.5s;
+}
+.holo.dark { --c: 255, 255, 255; --c2: 220, 230, 255; }
+body.fm-open .holo { opacity: 0; }
+
+.holo-rail { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.holo-line { fill: none; stroke: rgba(var(--c), 0.75); stroke-width: 2; filter: drop-shadow(0 0 6px rgba(var(--c), 0.6)); transition: stroke 0.6s; }
+.holo-dots circle { fill: rgba(var(--c), 1); filter: drop-shadow(0 0 5px rgba(var(--c), 0.9)); transition: fill 0.6s; }
+
+/* everything below is positioned relative to the ball's centre */
+.holo-unit { position: absolute; left: 0; top: 0; will-change: transform; }
+
+.holo-ball { position: absolute; left: -32px; top: -32px; width: 64px; height: 64px; transform: rotate(var(--tilt, 0deg)); transition: transform 0.3s; }
+.holo-ball::before { /* glow pool */
+  content: ""; position: absolute; inset: -18px; border-radius: 50%; z-index: -1;
+  background: radial-gradient(circle, rgba(var(--c), 0.45), transparent 65%); transition: background 0.6s;
+}
+.holo-ball img { width: 100%; height: 100%; object-fit: contain; display: none; }
+.holo-ball.img img { display: block; }
+.holo-ball.img .holo-face { display: none; }
+
+/* drawn ball (used until the ball images exist) */
+.holo-face {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 30% 26%, #fff 0 5%, #b9c8ff 12%, #5b7cff 42%, #6a4dff 82%, #4a2fd0);
+  box-shadow: inset -6px -8px 14px rgba(40, 20, 140, 0.35), 0 8px 18px -6px rgba(60, 40, 200, 0.5);
+}
+.holo-face i {
+  position: absolute; top: 19px; width: 14px; height: 17px; border-radius: 50%;
+  background: radial-gradient(circle at var(--px, 58%) var(--py, 58%), #111 0 32%, transparent 35%), #fff;
+  transition: height 0.12s, top 0.12s, background 0.2s;
+}
+.holo-face i:first-child { left: 15px; }
+.holo-face i:nth-child(2) { left: 35px; }
+.holo-face b { position: absolute; left: 50%; top: 41px; width: 12px; height: 6px; margin-left: -6px; border: 2.5px solid #1b1446; border-top: 0; border-radius: 0 0 10px 10px; transition: 0.2s; }
+.holo-ball[data-face="look-up"] .holo-face i { --py: 22%; --px: 50%; }
+.holo-ball[data-face="look-up"] .holo-face b { width: 8px; height: 8px; margin-left: -4px; border: 2.5px solid #1b1446; border-radius: 50%; }
+.holo-ball[data-face="project"] .holo-face i { height: 8px; top: 24px; background: none; border-top: 3px solid #fff; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+.holo-ball[data-face="project"] .holo-face b { width: 18px; height: 9px; margin-left: -9px; background: #1b1446; }
+.holo-ball[data-face="blink"] .holo-face i { height: 3px; top: 27px; background: #fff; }
+
+/* ── Volumetric projection: V-shaped LIGHT, never a solid shape ── */
+.holo { --ray: 64, 156, 255; --ray2: 120, 220, 255; }
+.holo.dark { --ray: 235, 245, 255; --ray2: 200, 235, 255; }
+
+/* soft haze: radial light only, no edges */
+.holo-haze {
+  position: absolute; left: -125px; bottom: -40px; width: 250px; height: 380px; pointer-events: none;
+  background: /* every glow fits fully inside the box, so no flat edges */
+    radial-gradient(30% 13% at 50% 80%, rgba(var(--ray2), 0.5), transparent 100%),
+    radial-gradient(45% 32% at 50% 32%, rgba(var(--ray), 0.12), transparent 100%);
+  opacity: 0; transform: scale(0.6); transform-origin: 50% 80%;
+  transition: opacity 0.6s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.holo-unit.beam .holo-haze { opacity: 1; transform: none; animation: holo-breathe 3.6s ease-in-out infinite; }
+@keyframes holo-breathe { 50% { opacity: 0.75; } }
+
+.holo-aura {
+  position: absolute; left: calc(var(--av, 210px) * -0.62); bottom: 131px; width: calc(var(--av, 210px) * 1.24); height: calc(var(--av, 210px) * 0.62);
+  background: radial-gradient(closest-side, rgba(var(--ray), 0.26), rgba(var(--ray2), 0.1) 55%, transparent);
+  filter: blur(6px); opacity: 0; transition: opacity 0.8s;
+}
+.holo-unit.figure .holo-aura { opacity: 1; animation: holo-breathe 4.2s ease-in-out infinite; }
+
+/* thin curved rays fanning out of the orb (drawn in hologram.js) */
+.holo-rays {
+  position: absolute; left: calc(var(--W, 110px) * -1); bottom: 28px; width: calc(var(--W, 110px) * 2); height: var(--H, 330px); overflow: visible; pointer-events: none;
+  color: rgb(var(--ray)); fill: none; stroke-linecap: round;
+  opacity: 0; transform: scaleY(0.2); transform-origin: 50% 100%;
+  transition: opacity 0.5s, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s;
+}
+.holo-unit.beam .holo-rays { opacity: 1; transform: none; }
+.holo-rays .glow { stroke: url(#holo-ray); filter: blur(4px); opacity: calc(var(--o) * 0.4); }
+.holo-rays .ray { stroke: url(#holo-ray); opacity: var(--o); animation: holo-ray var(--d) ease-in-out infinite var(--del); }
+.holo-rays .faint { animation-name: holo-ray-faint; }
+.holo-rays .pulse { stroke: #fff; stroke-dasharray: 22 1000; stroke-dashoffset: 30; opacity: 0.9; filter: drop-shadow(0 0 3px rgb(var(--ray2))); animation: holo-pulse var(--d) linear infinite var(--del); }
+@keyframes holo-ray { 0%, 100% { opacity: var(--o); } 45% { opacity: calc(var(--o) * 0.35); } 60% { opacity: calc(var(--o) * 1.15); } }
+@keyframes holo-ray-faint { 0%, 70%, 100% { opacity: 0; } 80% { opacity: var(--o); } 88% { opacity: calc(var(--o) * 0.4); } }
+@keyframes holo-pulse { from { stroke-dashoffset: 30; } to { stroke-dashoffset: -400; } }
+
+/* tiny particles drifting up the V */
+.holo-mote {
+  position: absolute; left: -1.5px; bottom: 34px; width: var(--s); height: var(--s); border-radius: 50%;
+  background: rgb(var(--mc, 255, 255, 255)); box-shadow: 0 0 6px 1px rgba(var(--ray2), 0.9); opacity: 0;
+}
+.holo-unit.beam .holo-mote { animation: holo-mote var(--d) linear infinite var(--del); }
+@keyframes holo-mote {
+  0% { transform: translate(var(--x0), 0); opacity: 0; }
+  15% { opacity: var(--o); }
+  45% { opacity: calc(var(--o) * 0.45); }
+  70% { opacity: var(--o); }
+  100% { transform: translate(var(--x1), var(--y1)); opacity: 0; }
+}
+
+/* the avatar floats free: rim light, faint scan lines, occasional flicker */
+.holo-figure {
+  position: absolute; left: calc(var(--av, 210px) / -2); bottom: 163px; width: var(--av, 210px); height: var(--av, 210px);
+  opacity: 0; transform: translateY(18px); filter: blur(8px); clip-path: inset(100% 0 0 0);
+  transition: opacity 0.5s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), filter 0.8s, clip-path 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.holo-unit.figure .holo-figure { opacity: 1; transform: none; filter: none; clip-path: inset(0 0 0 0); animation: holo-float 4s ease-in-out infinite, holo-flicker 5s infinite 1s; }
+.holo-img {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  -webkit-mask-image: radial-gradient(60% 52% at 50% 34%, #000 62%, transparent 100%); mask-image: radial-gradient(60% 52% at 50% 34%, #000 62%, transparent 100%); /* oval fade: no straight edge */
+  filter: drop-shadow(0 0 1.5px rgba(var(--ray2), 0.95)) drop-shadow(0 0 10px rgba(var(--ray), 0.5));
+}
+.holo-unit.fallback .holo-img { border-radius: 50%; -webkit-mask-image: radial-gradient(60% 55% at 50% 38%, #000 55%, transparent 78%); mask-image: radial-gradient(60% 55% at 50% 38%, #000 55%, transparent 78%); }
+.holo-scan { /* scan lines clipped to the avatar's own silhouette */
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(var(--ray2), 0.22) 0 1px, transparent 1px 4px);
+  -webkit-mask: var(--sil) center / contain no-repeat, radial-gradient(58% 50% at 50% 34%, #000 52%, transparent 95%); -webkit-mask-composite: source-in;
+  mask: var(--sil) center / contain no-repeat, radial-gradient(58% 50% at 50% 34%, #000 52%, transparent 95%); mask-composite: intersect;
+  animation: holo-scan 3s linear infinite;
+}
+@keyframes holo-scan { to { background-position: 0 40px; } }
+@keyframes holo-float { 50% { translate: 0 -5px; } }
+@keyframes holo-flicker { 0%, 92%, 100% { opacity: 1; } 93% { opacity: 0.55; } 95% { opacity: 0.95; } 96% { opacity: 0.7; } }
+
+/* speech cloud: grows with the caption */
+.holo-cloud {
+  position: absolute; bottom: calc(163px + var(--av, 210px) + 14px); left: var(--cl, -110px); width: max-content; max-width: var(--cw, 226px);
+  padding: 14px 18px; border-radius: 26px;
+  background: rgba(255, 255, 255, 0.86); border: 1px solid #fff;
+  box-shadow: 0 1px 0 #fff inset, 0 16px 40px -14px rgba(var(--c), 0.55), 0 2px 8px rgba(15, 23, 42, 0.06);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  font: 600 15px/1.38 var(--font); color: var(--ink); letter-spacing: -0.005em;
+  transform-origin: var(--tail, 50%) 100%; transform: scale(0.6) translateY(10px); opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+}
+.holo-cloud::after { /* tail */
+  content: ""; position: absolute; left: var(--tail, 50%); bottom: -7px; width: 16px; height: 16px; margin-left: -8px;
+  background: inherit; border-right: 1px solid #fff; border-bottom: 1px solid #fff; transform: rotate(45deg); border-radius: 0 0 4px 0;
+}
+.holo-unit.cloud .holo-cloud { transform: none; opacity: 1; }
+.holo-cloud span { opacity: 0; animation: holo-word 0.35s forwards; }
+@keyframes holo-word { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: blur(0); } }
+
+/* little energy strokes, like the reference */
+.holo-spark { position: absolute; width: 4px; height: 13px; border-radius: 3px; opacity: 0; transition: opacity 0.3s; }
+.holo-spark.s1 { left: 34px; top: -30px; background: #ffb547; transform: rotate(55deg); }
+.holo-spark.s2 { left: 42px; top: -18px; background: #ffb547; transform: rotate(80deg); }
+.holo-spark.s3 { left: 30px; top: -42px; background: #ffb547; transform: rotate(30deg); }
+.holo-unit.beam .holo-spark { opacity: 1; animation: holo-pop 1.6s ease-in-out infinite; }
+@keyframes holo-pop { 50% { translate: 2px -2px; } }
+
+@media (max-width: 1179px), (max-height: 640px) { .holo { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .holo-unit.beam *, .holo-unit.figure .holo-figure, .holo-scan { animation: none !important; }
+}
